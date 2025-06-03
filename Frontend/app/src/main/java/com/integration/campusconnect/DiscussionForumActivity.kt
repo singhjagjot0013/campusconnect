@@ -51,6 +51,7 @@ fun DiscussionForumScreen() {
     var posts by remember {
         mutableStateOf(
             listOf(
+                ForumPost("Jagdeep", "Carpooling from Surrey at 7 PM", "Study Groups", "7:00 PM"),
                 ForumPost("Prateek", "Anyone has notes for INFO 4190?", "Academic Help", "7:45 PM"),
                 ForumPost("Parneet", "Study group this Friday?", "Academic Help", "7:30 PM"),
                 ForumPost("Jagjot", "Carpooling from Richmond at 8 AM", "Study Groups", "7:20 PM")

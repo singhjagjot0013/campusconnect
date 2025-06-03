@@ -32,54 +32,66 @@ class HomeActivity : ComponentActivity() {
 fun HomeDashboard() {
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Welcome to Campus Connect",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
 
-        Button(
-            onClick = {
-                context.startActivity(Intent(context, FindRideActivity::class.java))
-            },
+        // The main centered column with text and buttons
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Find a Ride")
+            Text(
+                text = "Welcome to Campus Connect",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            Button(
+                onClick = {
+                    context.startActivity(Intent(context, FindRideActivity::class.java))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Text("Find a Ride")
+            }
+
+            Button(
+                onClick = {
+                    context.startActivity(Intent(context, OfferRideActivity::class.java))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Text("Offer a Ride")
+            }
+
+            Button(
+                onClick = {
+                    context.startActivity(Intent(context, DiscussionForumActivity::class.java))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Text("Discussion Forum")
+            }
         }
 
-        Button(
+        // Floating Login button in the top-right corner
+        FloatingActionButton(
             onClick = {
-
-                context.startActivity(Intent(context, OfferRideActivity::class.java))
+                context.startActivity(Intent(context, MainActivity::class.java))
             },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
+                .align(Alignment.TopEnd)
+                .padding(top = 32.dp, end = 16.dp)
         ) {
-            Text("Offer a Ride")
+            Text("Login")
         }
-
-
-        Button(
-            onClick = {
-                context.startActivity(Intent(context, DiscussionForumActivity::class.java))
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            Text("Discussion Forum")
-        }
-
     }
 }
-
