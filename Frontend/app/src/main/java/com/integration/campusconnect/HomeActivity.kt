@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.integration.campusconnect.ui.theme.CampusConnectTheme
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
+import androidx.compose.ui.tooling.preview.Preview
 
 
 class HomeActivity : ComponentActivity() {
@@ -26,7 +27,7 @@ class HomeActivity : ComponentActivity() {
         }
     }
 }
-
+@Preview
 @Composable
 fun HomeDashboard() {
     val context = LocalContext.current
