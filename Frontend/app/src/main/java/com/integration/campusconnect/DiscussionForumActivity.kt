@@ -58,73 +58,94 @@ fun DiscussionForumScreen() {
             )
         )
     }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Discussion Forum", style = MaterialTheme.typography.headlineMedium)
-        Text("Select Category:", style = MaterialTheme.typography.titleSmall)
-        var expanded by remember { mutableStateOf(false) }
-
-        Box {
-            OutlinedButton(onClick = { expanded = true }) {
-                Text(selectedCategory)
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                categories.forEach { category ->
-                    DropdownMenuItem(
-                        text = { Text(category) },
-                        onClick = {
-                            selectedCategory = category
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        OutlinedTextField(
-            value = postContent,
-            onValueChange = { postContent = it },
-            label = { Text("Write a new post...") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {
-                if (postContent.text.isNotBlank()) {
-                    val newPost = ForumPost("You", postContent.text, selectedCategory, getCurrentTime())
-                    posts = posts + newPost
-                    postContent = TextFieldValue("")
-                    Toast.makeText(context, "Post submitted", Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+    CampusConnectDrawer(drawerState, scope, context) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(24.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Post")
-        }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Discussion Forum", style = MaterialTheme.typography.headlineMedium)
+                Text("Select Category:", style = MaterialTheme.typography.titleSmall)
+                var expanded by remember { mutableStateOf(false) }
 
+                Box {
+                    OutlinedButton(onClick = { expanded = true }) {
+                        Text(selectedCategory)
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category) },
+                                onClick = {
+                                    selectedCategory = category
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
-        Text("Posts", style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(
+                    value = postContent,
+                    onValueChange = { postContent = it },
+                    label = { Text("Write a new post...") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-        LazyColumn {
-            items(posts.reversed()) { post ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
+                Button(
+                    onClick = {
+                        if (postContent.text.isNotBlank()) {
+                            val newPost = ForumPost(
+                                "You",
+                                postContent.text,
+                                selectedCategory,
+                                getCurrentTime()
+                            )
+                            posts = posts + newPost
+                            postContent = TextFieldValue("")
+                            Toast.makeText(context, "Post submitted", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("${post.author} • ${post.category} • ${post.timestamp}", style = MaterialTheme.typography.bodySmall)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(post.message, style = MaterialTheme.typography.bodyMedium)
+                    Text("Post")
+                }
+
+
+                Text("Posts", style = MaterialTheme.typography.titleMedium)
+
+                LazyColumn {
+                    items(posts.reversed()) { post ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            elevation = CardDefaults.cardElevation(4.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    "${post.author} • ${post.category} • ${post.timestamp}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(post.message, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
                     }
                 }
             }

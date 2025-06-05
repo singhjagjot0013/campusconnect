@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,7 +46,19 @@ fun FindRideScreen() {
         Ride("Inderdeep S.", "3:30 PM", "Richmond Campus", "Free"),
         Ride("Parneet K.", "6:00 PM", "Langley Campus", "$6.50")
     )
+    val context = LocalContext.current
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
+    CampusConnectDrawer(drawerState, scope, context) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(24.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -92,6 +105,8 @@ fun FindRideScreen() {
             Text("Request a Ride")
         }
     }
+}
+}
 }
 
 @Composable
