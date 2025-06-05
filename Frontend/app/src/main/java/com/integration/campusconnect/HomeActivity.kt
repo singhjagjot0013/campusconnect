@@ -10,10 +10,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-//import com.integration.campusconnect.ui.components.CampusConnectDrawer
 import com.integration.campusconnect.ui.theme.CampusConnectTheme
-import kotlinx.coroutines.launch
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +24,7 @@ class HomeActivity : ComponentActivity() {
         }
     }
 }
-
+@Preview
 @Composable
 fun HomeDashboard() {
     val context = LocalContext.current
@@ -40,35 +39,36 @@ fun HomeDashboard() {
                 .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Welcome to Campus Connect", style = MaterialTheme.typography.headlineMedium)
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = { context.startActivity(Intent(context, FindRideActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Find a Ride")
-            }
-
-            Button(
-                onClick = { context.startActivity(Intent(context, OfferRideActivity::class.java)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                Text("Offer a Ride")
-            }
-
-            Button(
-                onClick = { context.startActivity(Intent(context, DiscussionForumActivity::class.java)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                Text("Discussion Forum")
-            }
+        )
+        {
+//            Text("Welcome to Campus Connect", style = MaterialTheme.typography.headlineMedium)
+//
+//            Spacer(modifier = Modifier.height(32.dp))
+//
+//            Button(
+//                onClick = { context.startActivity(Intent(context, FindRideActivity::class.java)) },
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Text("Find a Ride")
+//            }
+//
+//            Button(
+//                onClick = { context.startActivity(Intent(context, OfferRideActivity::class.java)) },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(top = 8.dp)
+//            ) {
+//                Text("Offer a Ride")
+//            }
+//
+//            Button(
+//                onClick = { context.startActivity(Intent(context, DiscussionForumActivity::class.java)) },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(top = 8.dp)
+//            ) {
+//                Text("Discussion Forum")
+//            }
         }
     }
 }

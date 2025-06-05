@@ -27,6 +27,7 @@ fun CampusConnectDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
+
                 Text("Campus Connect", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
 
                 fun navTo(target: Class<*>) {

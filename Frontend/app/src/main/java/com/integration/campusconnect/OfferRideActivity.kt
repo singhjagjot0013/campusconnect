@@ -34,73 +34,99 @@ fun OfferRideScreen() {
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("") }
+    var pickupLocation by remember { mutableStateOf("") }
     var campus by remember { mutableStateOf("") }
     var cost by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Offer a Ride", style = MaterialTheme.typography.headlineMedium)
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = {
-                name = it
-                showError = it.isBlank()
-            },
-            label = { Text("Your Name") },
-            isError = showError,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = time,
-            onValueChange = {
-                time = it
-                showError = it.isBlank()
-            },
-            label = { Text("Pickup Time (e.g., 9:00 AM)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            isError = showError,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = campus,
-            onValueChange = {
-                campus = it
-                showError = it.isBlank()
-                },
-            label = { Text("Destination Campus") },
-            isError = showError,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = cost,
-            onValueChange = { cost = it },
-            label = { Text("Cost (optional)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {
-                // Later: Submit to backend
-                if(name.isBlank()){
-                    showError = true
-                } else{
-                    Toast.makeText(context, "Ride Offered Successfully!", Toast.LENGTH_LONG).show()
-                }
-
-            },
-            modifier = Modifier.fillMaxWidth()
+    CampusConnectDrawer(drawerState, scope, context) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(24.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Offer Ride")
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Offer a Ride", style = MaterialTheme.typography.headlineMedium)
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        showError = it.isBlank()
+                    },
+                    label = { Text("Your Name") },
+                    isError = showError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = time,
+                    onValueChange = {
+                        time = it
+                        showError = it.isBlank()
+                    },
+                    label = { Text("Pickup Time (e.g., 9:00 AM)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    isError = showError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = pickupLocation,
+                    onValueChange = {
+                        pickupLocation = it
+                        showError = it.isBlank()
+                    },
+                    // Add Maps API here
+                    label = { Text("Select Pickup Location 📍") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    isError = showError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = campus,
+                    onValueChange = {
+                        campus = it
+                        showError = it.isBlank()
+                    },
+                    label = { Text("Destination Campus") },
+                    isError = showError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = cost,
+                    onValueChange = { cost = it },
+                    label = { Text("Cost (optional)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Button(
+                    onClick = {
+                        // Later: Submit to backend
+                        if (name.isBlank()) {
+                            showError = true
+                        } else {
+                            Toast.makeText(context, "Ride Offered Successfully!", Toast.LENGTH_LONG)
+                                .show()
+                        }
+
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Offer Ride")
+                }
+            }
         }
     }
 }
