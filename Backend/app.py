@@ -1,7 +1,9 @@
+
 from flask import Flask
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+import MySQLdb
 
 app = Flask(__name__)
 CORS(app)
@@ -58,7 +60,279 @@ def login():
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 
+@app.route('/offer_ride', methods=['POST'])
+def offer_ride():
+    data = request.get_json()
+
+    driver_email = data.get('driver_email')
+    origin = data.get('origin')
+    destination = data.get('destination')
+    date = data.get('date')  # Format: YYYY-MM-DD
+    time = data.get('time')  # Format: HH:MM:SS
+    seats = data.get('seats_available')
+
+    if not all([driver_email, origin, destination, date, time, seats]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            INSERT INTO rides (driver_email, origin, destination, date, time, seats_available)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (driver_email, origin, destination, date, time, seats))
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Ride offered successfully"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/find_rides', methods=['GET'])
+def find_rides():
+    origin = request.args.get('origin')
+    destination = request.args.get('destination')
+    date = request.args.get('date')
+
+    query = "SELECT id, driver_email, origin, destination, date, time, seats_available FROM rides WHERE date >= CURDATE()"
+    params = []
+
+    if origin:
+        query += " AND origin = %s"
+        params.append(origin)
+    if destination:
+        query += " AND destination = %s"
+        params.append(destination)
+    if date:
+        query += " AND date = %s"
+        params.append(date)
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute(query, tuple(params))
+        rows = cur.fetchall()
+        cur.close()
+
+        rides = [
+            {
+                "id": row[0],
+                "driver_email": row[1],
+                "origin": row[2],
+                "destination": row[3],
+                "date": row[4].strftime("%Y-%m-%d"),
+                "time": str(row[5]),
+                "seats_available": row[6]
+            }
+            for row in rows
+        ]
+        return jsonify({"rides": rides}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/join_ride', methods=['POST'])
+def join_ride():
+    data = request.get_json()
+    ride_id = data.get('ride_id')
+    rider_email = data.get('rider_email')
+
+    if not ride_id or not rider_email:
+        return jsonify({"error": "ride_id and rider_email are required"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+
+        # Check available seats
+        cur.execute("SELECT seats_available FROM rides WHERE id = %s", (ride_id,))
+        result = cur.fetchone()
+        if not result:
+            return jsonify({"error": "Ride not found"}), 404
+
+        seats_available = result[0]
+        if seats_available <= 0:
+            return jsonify({"error": "No seats available"}), 400
+
+        # Insert ride request
+        cur.execute("INSERT INTO ride_requests (ride_id, rider_email) VALUES (%s, %s)", (ride_id, rider_email))
+
+        # Decrease seat count
+        cur.execute("UPDATE rides SET seats_available = seats_available - 1 WHERE id = %s", (ride_id,))
+
+        mysql.connection.commit()
+        cur.close()
+
+        return jsonify({"message": "Successfully joined the ride"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/my_rides', methods=['GET'])
+def my_rides():
+    rider_email = request.args.get('email')
+    
+    if not rider_email:
+        return jsonify({"error": "Email is required"}), 400
+
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        query = """
+            SELECT 
+                r.id, r.driver_email, r.origin, r.destination, r.date, r.time, r.seats_available
+            FROM 
+                ride_requests rr
+            JOIN 
+                rides r ON rr.ride_id = r.id
+            WHERE 
+                rr.rider_email = %s
+            ORDER BY 
+                r.date, r.time
+        """
+        cur.execute(query, (rider_email,))
+        rides = cur.fetchall()
+        cur.close()
+
+        # Format output
+        for ride in rides:
+            ride['date'] = ride['date'].strftime("%Y-%m-%d")
+            ride['time'] = str(ride['time'])
+
+        return jsonify({"joined_rides": rides}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/my_joined_rides', methods=['GET'])
+def my_joined_rides():
+    email = request.args.get('email')
+
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("""
+            SELECT r.id, r.driver_email, r.origin, r.destination, r.date, r.time
+            FROM rides r
+            JOIN ride_requests rr ON r.id = rr.ride_id
+            WHERE rr.rider_email = %s
+        """, (email,))
+        rows = cur.fetchall()
+        cur.close()
+
+        # Convert time to string
+        joined_rides = []
+        for row in rows:
+            joined_rides.append({
+                "ride_id": row['id'],
+                "driver_email": row['driver_email'],
+                "origin": row['origin'],
+                "destination": row['destination'],
+                "date": row['date'].strftime("%Y-%m-%d"),
+                "time": str(row['time'])  # Fix here
+            })
+
+        return jsonify({"joined_rides": joined_rides}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/cancel_ride', methods=['POST'])
+def cancel_ride():
+    data = request.get_json()
+    ride_id = data.get('ride_id')
+    rider_email = data.get('rider_email')
+
+    if not ride_id or not rider_email:
+        return jsonify({"error": "ride_id and rider_email are required"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+
+        # Delete the ride request
+        cur.execute("DELETE FROM ride_requests WHERE ride_id = %s AND rider_email = %s", (ride_id, rider_email))
+        
+        # Increase seat count
+        cur.execute("UPDATE rides SET seats_available = seats_available + 1 WHERE id = %s", (ride_id,))
+
+        mysql.connection.commit()
+        cur.close()
+
+        return jsonify({"message": "Ride canceled successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+@app.route('/create_topic', methods=['POST'])
+def create_topic():
+    data = request.get_json()
+    author_email = data.get('author_email')
+    title = data.get('title')
+    message = data.get('message')
+
+    if not all([author_email, title, message]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            INSERT INTO discussion_topics (author_email, title, message)
+            VALUES (%s, %s, %s)
+        """, (author_email, title, message))
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Discussion topic created successfully"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/get_topics', methods=['GET'])
+def get_topics():
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT * FROM discussion_topics ORDER BY created_at DESC")
+        topics = cur.fetchall()
+        cur.close()
+        return jsonify({"topics": topics}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/reply_topic', methods=['POST'])
+def reply_topic():
+    data = request.get_json()
+    topic_id = data.get('topic_id')
+    replier_email = data.get('replier_email')
+    reply = data.get('reply')
+
+    if not all([topic_id, replier_email, reply]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            INSERT INTO discussion_replies (topic_id, replier_email, reply)
+            VALUES (%s, %s, %s)
+        """, (topic_id, replier_email, reply))
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Reply posted successfully"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get_replies/<int:topic_id>', methods=['GET'])
+def get_replies(topic_id):
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT * FROM discussion_replies WHERE topic_id = %s ORDER BY created_at", (topic_id,))
+        replies = cur.fetchall()
+        cur.close()
+        return jsonify({"replies": replies}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+print(app.url_map)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-

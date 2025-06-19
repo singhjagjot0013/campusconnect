@@ -1,4 +1,26 @@
+# === Backend (Flask) ===
+Backend/venv/
+Backend/__pycache__/
+*.pyc
+*.log
+*.env
+
+# === Frontend (Android Studio) ===
+Frontend/.gradle/
+Frontend/.idea/
+Frontend/.cxx/
+Frontend/.local/
+Frontend/build/
+Frontend/app/build/
+Frontend/*.iml
+
+# === General ===
+.DS_Store
+Thumbs.db
 Backend/venv/
 Backend/venv/
 __pycache__/
 *.pyc
+venv/
+__pycache__/
+*pyc
