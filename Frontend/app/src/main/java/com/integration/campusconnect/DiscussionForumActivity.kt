@@ -1,128 +1,114 @@
 package com.integration.campusconnect
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.android.volley.toolbox.JsonArrayRequest
+import com.android.volley.toolbox.Volley
 import com.integration.campusconnect.ui.theme.CampusConnectTheme
-import java.text.SimpleDateFormat
-import java.util.*
 
-data class ForumPost(val author: String, val message: String, val category: String, val timestamp: String)
+data class Topic(
+    val id: Int,
+    val title: String,
+    val content: String,
+    val author_email: String
+)
 
-class DiscussionForumActivity : ComponentActivity() {
+class DiscussionTopicsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 🔒 Check login session
+        val sharedPref = getSharedPreferences("CampusConnectPrefs", Context.MODE_PRIVATE)
+        val userEmail = sharedPref.getString("user_email", null)
+        Log.d("SessionCheck", "Retrieved user_email: $userEmail")
+
+        if (userEmail == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
         setContent {
             CampusConnectTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    DiscussionForumScreen()
+                    DiscussionTopicsScreen()
                 }
             }
         }
     }
-}
-
-fun getCurrentTime(): String {
-    val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-    return sdf.format(Date())
 }
 
 @Composable
-fun DiscussionForumScreen() {
+fun DiscussionTopicsScreen() {
     val context = LocalContext.current
+    var topics by remember { mutableStateOf(listOf<Topic>()) }
 
-    var postContent by remember { mutableStateOf(TextFieldValue("")) }
-    var selectedCategory by remember { mutableStateOf("Academic Help") }
+    LaunchedEffect(true) {
+        val queue = Volley.newRequestQueue(context)
+        val url = "${NetworkUtils.BASE_URL}/get_topics"
 
-    val categories = listOf("Academic Help", "Study Groups", "Social Events")
-
-    var posts by remember {
-        mutableStateOf(
-            listOf(
-                ForumPost("Prateek", "Anyone has notes for INFO 4190?", "Academic Help", "7:45 PM"),
-                ForumPost("Parneet", "Study group this Friday?", "Academic Help", "7:30 PM"),
-                ForumPost("Jagjot", "Carpooling from Richmond at 8 AM", "Study Groups", "7:20 PM")
-            )
-        )
+        val request = JsonArrayRequest(url,
+            { response ->
+                val list = mutableListOf<Topic>()
+                for (i in 0 until response.length()) {
+                    val item = response.getJSONObject(i)
+                    val topic = Topic(
+                        id = item.getInt("id"),
+                        title = item.getString("title"),
+                        content = item.getString("content"),
+                        author_email = item.getString("author_email")
+                    )
+                    list.add(topic)
+                }
+                topics = list
+            },
+            { error ->
+                Toast.makeText(context, "Error fetching topics", Toast.LENGTH_SHORT).show()
+            })
+        queue.add(request)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Discussion Forum", style = MaterialTheme.typography.headlineMedium)
-        Text("Select Category:", style = MaterialTheme.typography.titleSmall)
-        var expanded by remember { mutableStateOf(false) }
-
-        Box {
-            OutlinedButton(onClick = { expanded = true }) {
-                Text(selectedCategory)
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                categories.forEach { category ->
-                    DropdownMenuItem(
-                        text = { Text(category) },
-                        onClick = {
-                            selectedCategory = category
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        OutlinedTextField(
-            value = postContent,
-            onValueChange = { postContent = it },
-            label = { Text("Write a new post...") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
+    Column(Modifier.padding(16.dp)) {
         Button(
-            onClick = {
-                if (postContent.text.isNotBlank()) {
-                    val newPost = ForumPost("You", postContent.text, selectedCategory, getCurrentTime())
-                    posts = posts + newPost
-                    postContent = TextFieldValue("")
-                    Toast.makeText(context, "Post submitted", Toast.LENGTH_SHORT).show()
-                }
-            },
+            onClick = { context.startActivity(Intent(context, CreateTopicActivity::class.java)) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Post")
+            Text("Create New Topic")
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Posts", style = MaterialTheme.typography.titleMedium)
-
-        LazyColumn {
-            items(posts.reversed()) { post ->
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(topics) { topic ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                            val intent = Intent(context, RepliesActivity::class.java)
+                            intent.putExtra("TOPIC_ID", topic.id)
+                            context.startActivity(intent)
+                        }
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("${post.author} • ${post.category} • ${post.timestamp}", style = MaterialTheme.typography.bodySmall)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(post.message, style = MaterialTheme.typography.bodyMedium)
+                        Text("Title: ${topic.title}", style = MaterialTheme.typography.titleMedium)
+                        Text("By: ${topic.author_email}", style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(4.dp))
+                        Text(topic.content, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

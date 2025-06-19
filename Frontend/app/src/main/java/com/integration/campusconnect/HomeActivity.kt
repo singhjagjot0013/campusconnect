@@ -70,7 +70,7 @@ fun HomeDashboard() {
 
         Button(
             onClick = {
-                context.startActivity(Intent(context, DiscussionForumActivity::class.java))
+                context.startActivity(Intent(context, DiscussionTopicsActivity::class.java))
             },
             modifier = Modifier
                 .fillMaxWidth()
