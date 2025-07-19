@@ -44,7 +44,8 @@ fun FindRideScreen() {
     val mockRides = listOf(
         Ride("Prateek C.", "9:00 AM", "Surrey Campus", "$5.00"),
         Ride("Inderdeep S.", "3:30 PM", "Richmond Campus", "Free"),
-        Ride("Parneet K.", "6:00 PM", "Langley Campus", "$6.50")
+        Ride("Parneet K.", "6:00 PM", "Langley Campus", "$6.50"),
+        Ride("Jagdeep P.", "12:00 PM", "Surrey Campus", "$6.50")
     )
     val context = LocalContext.current
     val drawerState = rememberDrawerState(DrawerValue.Closed)

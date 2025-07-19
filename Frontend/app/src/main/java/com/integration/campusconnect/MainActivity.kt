@@ -33,56 +33,68 @@ fun LoginScreen() {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
 
-    CampusConnectDrawer(drawerState, scope, context) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(24.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Campus Connect",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground
         )
-        {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = "Campus Connect", style = MaterialTheme.typography.headlineMedium)
-                Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Student Email") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Student Email", color = MaterialTheme.colorScheme.onBackground) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground,
+                focusedBorderColor = MaterialTheme.colorScheme.onBackground,
+                cursorColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
+            )
+        )
 
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
-                )
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password", color = MaterialTheme.colorScheme.onBackground) },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground,
+                focusedBorderColor = MaterialTheme.colorScheme.onBackground,
+                cursorColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
+            )
+        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
-                    onClick = {
-                        // TODO: Add real authentication later
-                        context.startActivity(Intent(context, HomeActivity::class.java))
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Login")
-                }
-            }
+        Button(
+            onClick = {
+                context.startActivity(Intent(context, HomeActivity::class.java))
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
+            )
+        ) {
+            Text("Login")
         }
     }
 }
+

@@ -59,6 +59,25 @@ fun CampusConnectDrawer(
                     onClick = { navTo(DiscussionForumActivity::class.java) }
                 )
 
+//                NavigationDrawerItem(
+//                    label = { Text("Map") },
+//                    selected = false,
+//                    onClick = { navTo(MapsPage::class.java) }
+//                )
+
+                NavigationDrawerItem(
+                    label = { Text("Map") },
+                    selected = false,
+                    onClick = {
+                        try {
+                            navTo(MapsPage::class.java)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                )
+
+
                 NavigationDrawerItem(
                     label = { Text("Login") },
                     selected = false,
