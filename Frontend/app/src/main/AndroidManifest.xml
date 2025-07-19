@@ -18,7 +18,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="Paste_API_Key_Here" />
+            android:value="Place_API_Key_Here" />
 
         <activity
             android:name=".DiscussionForumActivity"
