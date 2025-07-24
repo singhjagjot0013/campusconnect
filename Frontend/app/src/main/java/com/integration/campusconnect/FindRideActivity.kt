@@ -1,24 +1,32 @@
 package com.integration.campusconnect
 
+import android.app.DatePickerDialog
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.integration.campusconnect.ui.theme.CampusConnectTheme
-import com.android.volley.toolbox.Volley
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
+import com.integration.campusconnect.ui.theme.CampusConnectTheme
 import org.json.JSONObject
+import java.util.*
 
 class FindRideActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,132 +41,207 @@ class FindRideActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FindRideScreen() {
     val context = LocalContext.current
-    val sharedPref = context.getSharedPreferences("CampusConnectPrefs", Context.MODE_PRIVATE)
-    val loggedInEmail = sharedPref.getString("user_email", null)
-
-    var origin by remember { mutableStateOf("") }
-    var destination by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var rideResults by remember { mutableStateOf(listOf<JSONObject>()) }
+    var origin by remember { mutableStateOf(TextFieldValue()) }
+    var destination by remember { mutableStateOf(TextFieldValue()) }
+    var date by remember { mutableStateOf(TextFieldValue()) }
+    var availableRides by remember { mutableStateOf(listOf<JSONObject>()) }
     var joinedRides by remember { mutableStateOf(listOf<JSONObject>()) }
 
-    fun fetchJoinedRides() {
-        if (loggedInEmail == null) return
-        val url = "${NetworkUtils.BASE_URL}/my_joined_rides?email=$loggedInEmail"
-        val queue = Volley.newRequestQueue(context)
+    val sharedPref = context.getSharedPreferences("CampusConnectPrefs", Context.MODE_PRIVATE)
+    val userEmail = sharedPref.getString("user_email", "") ?: ""
 
-        val request = JsonObjectRequest(url, { response ->
-            val ridesArray = response.getJSONArray("joined_rides")
-            val list = mutableListOf<JSONObject>()
-            for (i in 0 until ridesArray.length()) {
-                list.add(ridesArray.getJSONObject(i))
-            }
-            joinedRides = list
-        }, { error ->
-            Toast.makeText(context, "Error loading joined rides", Toast.LENGTH_SHORT).show()
-        })
+    fun fetchJoinedRides() {
+        val url = "${NetworkUtils.BASE_URL}/my_joined_rides?email=$userEmail"
+        val queue = Volley.newRequestQueue(context)
+        val request = JsonObjectRequest(Request.Method.GET, url, null,
+            { response ->
+                val ridesArray = response.getJSONArray("joined_rides")
+                val ridesList = mutableListOf<JSONObject>()
+                for (i in 0 until ridesArray.length()) {
+                    ridesList.add(ridesArray.getJSONObject(i))
+                }
+                joinedRides = ridesList
+            },
+            { Toast.makeText(context, "Failed to fetch joined rides", Toast.LENGTH_SHORT).show() }
+        )
         queue.add(request)
     }
 
-    LaunchedEffect(Unit) {
-        fetchJoinedRides()
-    }
-
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-
-        Text("Find a Ride", style = MaterialTheme.typography.headlineMedium)
-
-        OutlinedTextField(value = origin, onValueChange = { origin = it }, label = { Text("Origin") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = destination, onValueChange = { destination = it }, label = { Text("Destination") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Date (optional)") }, modifier = Modifier.fillMaxWidth())
-
-        Button(onClick = {
-            val queue = Volley.newRequestQueue(context)
-            val url = buildString {
-                append("${NetworkUtils.BASE_URL}/find_rides?origin=${origin.trim()}&destination=${destination.trim()}")
-                if (date.isNotBlank()) append("&date=${date.trim()}")
-            }
-            val request = JsonObjectRequest(url, { response ->
-                val array = response.getJSONArray("rides")
-                val results = mutableListOf<JSONObject>()
-                for (i in 0 until array.length()) {
-                    results.add(array.getJSONObject(i))
-                }
-                rideResults = results
-            }, { error ->
-                Toast.makeText(context, "Error finding rides", Toast.LENGTH_SHORT).show()
-            })
-            queue.add(request)
-        }, modifier = Modifier.fillMaxWidth()) {
-            Text("Search")
-        }
-
-        Divider(thickness = 1.dp)
-        Text("Available Rides", style = MaterialTheme.typography.titleMedium)
-        LazyColumn {
-            items(rideResults) { ride ->
-                Card(modifier = Modifier
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Find a Ride", color = Color.White) },
+                navigationIcon = {
+                    IconButton(onClick = { (context as ComponentActivity).finish() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
+            )
+        },
+        containerColor = Color.White
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .padding(16.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            OutlinedTextField(
+                value = origin,
+                onValueChange = { origin = it },
+                label = { Text("Origin") },
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("${ride.getString("origin")} to ${ride.getString("destination")} on ${ride.getString("date")} at ${ride.getString("time")}")
-                        Button(onClick = {
-                            val queue = Volley.newRequestQueue(context)
-                            val joinUrl = "${NetworkUtils.BASE_URL}/join_ride"
-                            val json = JSONObject().apply {
-                                put("ride_id", ride.getInt("id"))
-                                put("rider_email", loggedInEmail)
+                    .padding(vertical = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = destination,
+                onValueChange = { destination = it },
+                label = { Text("Destination") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+
+            DateField(date) { newDate ->
+                date = TextFieldValue(newDate)
+            }
+
+            Button(
+                onClick = {
+                    val url = "${NetworkUtils.BASE_URL}/find_rides"
+                    val jsonBody = JSONObject().apply {
+                        put("origin", origin.text)
+                        put("destination", destination.text)
+                        put("date", date.text)
+                    }
+                    val queue = Volley.newRequestQueue(context)
+                    val request = JsonObjectRequest(Request.Method.POST, url, jsonBody,
+                        { response ->
+                            val ridesArray = response.getJSONArray("rides")
+                            val ridesList = mutableListOf<JSONObject>()
+                            for (i in 0 until ridesArray.length()) {
+                                ridesList.add(ridesArray.getJSONObject(i))
                             }
-                            val request = JsonObjectRequest(Request.Method.POST, joinUrl, json, {
-                                Toast.makeText(context, "Ride Joined", Toast.LENGTH_SHORT).show()
-                                fetchJoinedRides()
-                            }, {
-                                Toast.makeText(context, "Join failed", Toast.LENGTH_SHORT).show()
-                            })
-                            queue.add(request)
-                        }) {
-                            Text("Join Ride")
-                        }
+                            availableRides = ridesList
+                            fetchJoinedRides()
+                        },
+                        { Toast.makeText(context, "Failed to fetch rides", Toast.LENGTH_SHORT).show() })
+                    queue.add(request)
+                },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Search", color = Color.White)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            SectionTitle("Available Rides")
+            RideList(rides = availableRides, isJoined = false, userEmail = userEmail, onAction = { fetchJoinedRides() })
+
+            Spacer(modifier = Modifier.height(12.dp))
+            SectionTitle("My Joined Rides")
+            RideList(rides = joinedRides, isJoined = true, userEmail = userEmail, onAction = { fetchJoinedRides() })
+        }
+    }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Text(title, style = MaterialTheme.typography.titleMedium)
+    Divider(modifier = Modifier.padding(vertical = 6.dp))
+}
+
+@Composable
+fun RideList(
+    rides: List<JSONObject>,
+    isJoined: Boolean,
+    userEmail: String,
+    onAction: () -> Unit
+) {
+    val context = LocalContext.current
+
+    if (rides.isEmpty()) {
+        Text(if (isJoined) "You haven't joined any rides yet." else "No rides found.")
+    } else {
+        rides.forEach { ride ->
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(Modifier.padding(10.dp)) {
+                    Text("Driver: ${ride.getString("driver_email")}", color = Color.White)
+                    Text("Route: ${ride.getString("origin")} → ${ride.getString("destination")}", color = Color.White)
+                    Text("Time: ${ride.getString("date")} @ ${ride.getString("time")}", color = Color.White)
+                    if (!isJoined) Text("Seats: ${ride.getInt("seats_available")}", color = Color.White)
+                    Spacer(Modifier.height(6.dp))
+
+                    val buttonText = if (isJoined) "Cancel" else "Join"
+                    val url = if (isJoined) "/cancel_ride" else "/join_ride"
+                    val jsonBody = JSONObject().apply {
+                        put("ride_id", if (isJoined) ride.getInt("ride_id") else ride.getInt("id"))
+                        put("rider_email", userEmail)
+                    }
+
+                    Button(
+                        onClick = {
+                            val fullUrl = "${NetworkUtils.BASE_URL}$url"
+                            val request = JsonObjectRequest(Request.Method.POST, fullUrl, jsonBody,
+                                {
+                                    Toast.makeText(context, "$buttonText successful", Toast.LENGTH_SHORT).show()
+                                    onAction()
+                                },
+                                {
+                                    Toast.makeText(context, "Failed to $buttonText ride", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                            Volley.newRequestQueue(context).add(request)
+                        },
+                        modifier = Modifier.align(Alignment.End),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                    ) {
+                        Text(buttonText, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
         }
-
-        Divider(thickness = 1.dp)
-        Text("My Joined Rides", style = MaterialTheme.typography.titleMedium)
-        LazyColumn {
-            items(joinedRides) { ride ->
-                Card(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("${ride.getString("origin")} to ${ride.getString("destination")} on ${ride.getString("date")} at ${ride.getString("time")}")
-                        Button(onClick = {
-                            val queue = Volley.newRequestQueue(context)
-                            val cancelUrl = "${NetworkUtils.BASE_URL}/cancel_ride"
-                            val json = JSONObject().apply {
-                                put("ride_id", ride.getInt("ride_id"))
-                                put("rider_email", loggedInEmail)
-                            }
-                            val request = JsonObjectRequest(Request.Method.POST, cancelUrl, json, {
-                                Toast.makeText(context, "Ride Cancelled", Toast.LENGTH_SHORT).show()
-                                fetchJoinedRides()
-                            }, {
-                                Toast.makeText(context, "Cancel failed", Toast.LENGTH_SHORT).show()
-                            })
-                            queue.add(request)
-                        }) {
-                            Text("Cancel Ride")
-                        }
-                    }
-                }
-            }
-        }
     }
+}
+
+@Composable
+fun DateField(date: TextFieldValue, onDateSelected: (String) -> Unit) {
+    val context = LocalContext.current
+    OutlinedTextField(
+        value = date,
+        onValueChange = {},
+        readOnly = true,
+        label = { Text("Date (optional)") },
+        leadingIcon = { Icon(Icons.Default.Event, contentDescription = null) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable {
+                val calendar = Calendar.getInstance()
+                DatePickerDialog(
+                    context,
+                    { _, year, month, day ->
+                        onDateSelected("%04d-%02d-%02d".format(year, month + 1, day))
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            }
+    )
 }

@@ -12,7 +12,7 @@ import androidx.core.content.edit
 
 object NetworkUtils {
 
-    const val BASE_URL = "http://18.188.65.57:5000"  // your updated EC2 IP
+    const val BASE_URL = "http://3.21.247.142:5000"  // EC2 IP
 
     fun login(context: Context, email: String, password: String) {
         val queue = Volley.newRequestQueue(context)
@@ -27,16 +27,16 @@ object NetworkUtils {
             Request.Method.POST, url, requestBody,
             { response ->
                 val sharedPref = context.getSharedPreferences("CampusConnectPrefs", Context.MODE_PRIVATE)
-                with(sharedPref.edit()) {
+                sharedPref.edit {
                     putString("user_email", email)
-                    apply()
                 }
 
                 Log.d("LoginDebug", "Saved user_email: $email")
 
                 Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
 
-                val intent = Intent(context, HomeActivity::class.java).apply {
+                // 🚀 Redirect to MainActivity (NOT HomeActivity)
+                val intent = Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
                 context.startActivity(intent)

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -14,10 +15,9 @@
         android:theme="@style/Theme.CampusConnect"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
-        <activity android:name=".RegisterActivity" android:exported="false" />
 
-        <activity
-            android:name=".LoginActivity"
+        <activity android:name=".RegisterActivity" android:exported="false" />
+        <activity android:name=".LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.CampusConnect">
             <intent-filter>
@@ -25,31 +25,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".DiscussionTopicsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".OfferRideActivity"
-            android:exported="false" />
-        <activity
-            android:name=".FindRideActivity"
-            android:exported="false" />
-        <activity
-            android:name=".HomeActivity"
-            android:exported="true">
-        </activity>
-        <activity
-            android:name=".SplashActivity"
+
+        <activity android:name=".ProfileSettingsActivity" />
+        <activity android:name=".DiscussionForumActivity" android:exported="false" />
+        <activity android:name=".CreateTopicActivity" android:exported="false" />
+        <activity android:name=".RepliesActivity" android:exported="false" />
+        <activity android:name=".OfferRideActivity" android:exported="false" />
+        <activity android:name=".FindRideActivity" android:exported="false" />
+        <activity android:name=".HomeActivity" android:exported="true" />
+        <activity android:name=".SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.CampusConnect">
-        </activity>
-        <activity
-            android:name=".MainActivity"
+            android:theme="@style/Theme.CampusConnect" />
+        <activity android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.CampusConnect" />
     </application>
-
-
-
-
 </manifest>
